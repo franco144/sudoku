@@ -1,27 +1,22 @@
 
 import sys
 from board import Board
+from sudokuresolver import SudokuResolver
 
-
-class SudokuResolver():
-
-    def __init__(self, board):
-        self.b = board
-
-    def resolve(self):
-        Board.print_board(self.b.BOARD)
-        print("\n\nStarting execution...\n")
-        self.b.run()
-
-def main():
+def run():
     """
     create a Board
     add clues to the Board
     resolve
     """
-    b = Board()
+    clues = {
+        12:4,14:3,17:6,21:1,22:2,25:7,28:4,36:8,39:1,41:9,56:6,57:5,61:4,64:9,67:3,72:1,73:2,75:5,81:3,91:7,93:9,95:2,97:8,98:1
+    }
+    b = Board(clues)
+    
     resolver = SudokuResolver(b)
-    resolver.resolve()
+    resolver.print()
+    # resolver.resolve()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     run()

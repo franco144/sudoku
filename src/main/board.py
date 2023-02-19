@@ -1,4 +1,5 @@
 import sys
+from typing import Dict
 
 """
 -------------------------------
@@ -28,18 +29,22 @@ class Board():
 	91: 0,	92: 0,	93: 0,	94: 0,	95: 0,	96: 0,	97: 0,	98: 0,	99: 0
     }
 
-    def __init__(self) -> None:
-        self.curr = 10  # index of cell before the first one
+    def __init__(
+        self, 
+        clues: Dict[int, str]
+    ) -> None:
+        self.curr = 10  # index of the 'zero cell'
         # self.clues = [12,14,17,21,22,25,28,36,39,41,56,57,61,64,67,72,73,75,81,91,93,95,97,98] 
-        self.clues_values = {
-            12:4,14:3,17:6,21:1,22:2,25:7,28:4,36:8,39:1,41:9,56:6,57:5,61:4,64:9,67:3,72:1,73:2,75:5,81:3,91:7,93:9,95:2,97:8,98:1
-        }
-        self.clues = list(self.clues_values.keys()) # indexes of clue cells
+        # self.clues_values = {
+        #    12:4,14:3,17:6,21:1,22:2,25:7,28:4,36:8,39:1,41:9,56:6,57:5,61:4,64:9,67:3,72:1,73:2,75:5,81:3,91:7,93:9,95:2,97:8,98:1
+        # }
+        self.clues_dict = clues
+        self.clues = list(self.clues_dict.keys()) # indexes of clue cells
         self.cells = [] # LIFO with indexes of non clue cells
         
         for cell in self.BOARD.keys():
             if cell in self.clues:
-                self.BOARD[cell] = self.clues_values[cell]
+                self.BOARD[cell] = self.clues_dict[cell]
 
         print(f"self.clues: {self.clues}")
         print(f"cells to fill: {[i for i in Board.BOARD.keys() if i not in self.clues]}")
