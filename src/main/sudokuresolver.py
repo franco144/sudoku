@@ -1,13 +1,21 @@
 from board import Board
+from typing import Dict
 
 class SudokuResolver():
 
-    def __init__(self, board):
+    def __init__(self, board: Board):
         self.b = board
 
-    def print(self):
-        Board.print_board(self.b.BOARD)
+    def print_board(self):
+        """
+        Prints the board with clues. The solution will be printed
+        if the Sudoku is also resolved.
+        """
+        Board.print_board(self.b.get_board())
+    
+    def get_board(self) -> Dict[int, int]:
+        return self.b.get_board()
+
+    def resolve(self) -> Dict[int, int]:
         print("\n\nStarting execution...\n")
-        
-    def resolve(self):
-        self.b.run()
+        return self.b.run()

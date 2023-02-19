@@ -18,38 +18,40 @@ from typing import Dict
 """
 class Board():
     BOARD = {
-	11: 0,	12: 0,	13: 0,	14: 0,	15: 0,	16: 0,	17: 0,	18: 0,	19: 0,
-	21: 0,	22: 0,	23: 0,	24: 0,	25: 0,	26: 0,	27: 0,	28: 0,	29: 0,
-	31: 0,	32: 0,	33: 0,	34: 0,	35: 0,	36: 0,	37: 0,	38: 0,	39: 0,
-	41: 0,	42: 0,	43: 0,	44: 0,	45: 0,	46: 0,	47: 0,	48: 0,	49: 0,
-	51: 0,	52: 0,	53: 0,	54: 0,	55: 0,	56: 0,	57: 0,	58: 0,	59: 0,
-	61: 0,	62: 0,	63: 0,	64: 0,	65: 0,	66: 0,	67: 0,	68: 0,	69: 0,
-	71: 0,	72: 0,	73: 0,	74: 0,	75: 0,	76: 0,	77: 0,	78: 0,	79: 0,
-	81: 0,	82: 0,	83: 0,	84: 0,	85: 0,	86: 0,	87: 0,	88: 0,	89: 0,
-	91: 0,	92: 0,	93: 0,	94: 0,	95: 0,	96: 0,	97: 0,	98: 0,	99: 0
+        11:  0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0,
+        21: 0, 22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0, 29: 0,
+        31: 0, 32: 0, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0, 38: 0, 39: 0,
+        41: 0, 42: 0, 43: 0, 44: 0, 45: 0, 46: 0, 47: 0, 48: 0, 49: 0,
+        51: 0, 52: 0, 53: 0, 54: 0, 55: 0, 56: 0, 57: 0, 58: 0, 59: 0,
+        61: 0, 62: 0, 63: 0, 64: 0, 65: 0, 66: 0, 67: 0, 68: 0, 69: 0,
+        71: 0, 72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0, 78: 0, 79: 0,
+        81: 0, 82: 0, 83: 0, 84: 0, 85: 0, 86: 0, 87: 0, 88: 0, 89: 0,
+        91: 0, 92: 0, 93: 0, 94: 0, 95: 0, 96: 0, 97: 0, 98: 0, 99: 0
     }
 
     def __init__(
         self, 
-        clues: Dict[int, str]
+        clues: Dict[int, int]
     ) -> None:
         self.curr = 10  # index of the 'zero cell'
         # self.clues = [12,14,17,21,22,25,28,36,39,41,56,57,61,64,67,72,73,75,81,91,93,95,97,98] 
         # self.clues_values = {
         #    12:4,14:3,17:6,21:1,22:2,25:7,28:4,36:8,39:1,41:9,56:6,57:5,61:4,64:9,67:3,72:1,73:2,75:5,81:3,91:7,93:9,95:2,97:8,98:1
         # }
-        self.clues_dict = clues
-        self.clues = list(self.clues_dict.keys()) # indexes of clue cells
+        self.clue_cells = clues.keys() # indexes of clue cells
         self.cells = [] # LIFO with indexes of non clue cells
         
         for cell in self.BOARD.keys():
-            if cell in self.clues:
-                self.BOARD[cell] = self.clues_dict[cell]
+            if cell in self.clue_cells:
+                self.BOARD[cell] = clues[cell]
 
-        print(f"self.clues: {self.clues}")
-        print(f"cells to fill: {[i for i in Board.BOARD.keys() if i not in self.clues]}")
-        
-    def run(self):
+        print(f"self.clues: {self.clue_cells}")
+        print(f"cells to fill: {[i for i in Board.BOARD.keys() if i not in self.clue_cells]}")
+
+    def get_board(self) -> Dict[int, int]:
+        return self.BOARD
+
+    def run(self) -> Dict[int, int]:
         """
         get cell
         get value of cell
@@ -85,7 +87,7 @@ class Board():
                     if self.curr == 99:
                         Board.print_board(self.BOARD)
                         print("Reached last cell successfully!")
-                        sys.exit(0)
+                        return self.BOARD
                     break
             
             if value == 9 and dir == 0:
@@ -134,7 +136,7 @@ class Board():
         else:
             res = curr + 1
         # check if cell is one of the clues
-        if res in self.clues:
+        if res in self.clue_cells:
             return self.next(res)
 
         self.cells.append(res)

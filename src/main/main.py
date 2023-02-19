@@ -15,7 +15,7 @@ def run():
     b = Board(clues)
     
     resolver = SudokuResolver(b)
-    resolver.print()
+    resolver.print_board()
     # resolver.resolve()
 
 # if __name__ == "__main__":
