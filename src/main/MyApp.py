@@ -5,6 +5,7 @@
 #
 import os 
 import sys
+import time
 
 import wx
 from typing import Dict
@@ -21,11 +22,16 @@ from sudokuresolver import SudokuResolver
 CLASSIC_SUDOKU_MIN_CLUES = 17
 
 # Define notification event for thread completion
-EVT_RESULT_ID = wx.NewId()
+EVT_RESULT_ID = wx.ID_ANY
+EVT_PARTIAL_RESULT_ID = wx.ID_ANY
 
 def EVT_RESULT(win, func):
     """Define Result Event."""
     win.Connect(-1, -1, EVT_RESULT_ID, func)
+
+def EVT_PARTIAL_RESULT(win, func):
+    """Define Partial Result Event."""
+    win.Connect(-1, -1, EVT_PARTIAL_RESULT_ID, func)
 
 class ResultEvent(wx.PyEvent):
     """Simple event to carry arbitrary result data."""
@@ -35,6 +41,17 @@ class ResultEvent(wx.PyEvent):
         self.SetEventType(EVT_RESULT_ID)
         self.data = data
 
+class PartialResultEvent(wx.PyEvent):
+    """
+    Simple event to carry the value of one cell of the board.
+    The value might be not the same in the final solution.
+    """
+    def __init__(self, data):
+        """Init Result Event."""
+        wx.PyEvent.__init__(self)
+        self.SetEventType(EVT_PARTIAL_RESULT_ID)
+        self.data = data
+
 # Thread class that executes processing
 class ResolverThread(Thread):
     """Worker Thread Class."""
@@ -42,8 +59,9 @@ class ResolverThread(Thread):
         """Init Worker Thread Class."""
         Thread.__init__(self)
         self._notify_window = notify_window
-        self._want_abort = 0
+        self._want_abort = False
         self._resolver = resolver
+        self.has_next = 1
         # This starts the thread running on creation, but you could
         # also make the GUI thread responsible for calling this
         self.start()
@@ -51,33 +69,40 @@ class ResolverThread(Thread):
 
     def run(self):
         """Run Worker Thread."""
-        # need to structure your processing so that you periodically
-        # peek at the abort variable
-        solution = self._resolver.resolve()
-            # if self._want_abort:
-            #     # Use a result of None to acknowledge the abort (of
-            #     # course you can use whatever you'd like or even
-            #     # a separate event type)
-            #     wx.PostEvent(self._notify_window, ResultEvent(None))
-            #     return
-        # Here's where the result would be returned (it could be
-        # any Python object)
-        wx.PostEvent(self._notify_window, ResultEvent(solution))
+        # # resolve() completes when the whole solution is found
+        # solution = self._resolver.resolve()
+        
+        # # Here's where the result would be returned (it could be
+        # # any Python object)
+        # wx.PostEvent(self._notify_window, ResultEvent(solution))
+
+        self._resolver.run(self.callback)
+
+    def callback(self, cell, value) -> None:
+        if self._want_abort:
+            wx.PostEvent(self._notify_window, PartialResultEvent((None,None)))
+            print(f"Aborting...")
+            self._resolver.stop()
+            return
+
+        self.has_next = value
+        if self.has_next:
+            time.sleep(0.00001)
+            wx.PostEvent(self._notify_window, PartialResultEvent((cell, value)))
+        else:
+            print(f"Reached last cell... exiting")
+            return
 
     def abort(self):
         """abort worker thread."""
         # Method for use by main thread to signal an abort
-        self._want_abort = 1
+        self._want_abort = True
 
 
 class CsFrame(wx.Frame):
     def __init__(self, *args, **kwds):
-        wx.Frame.__init__(self,*args, **kwds)
-        self.clues = {}
-        self.worker = None
         
-        # Set up event handler for any worker thread results
-        EVT_RESULT(self, self.on_result)
+        self.clues = {}
         self.worker = None
 
         # begin wxGlade: CsFrame.__init__
@@ -95,11 +120,16 @@ class CsFrame(wx.Frame):
         header = wx.BoxSizer(wx.HORIZONTAL)
         sizer_1.Add(header, 1, wx.BOTTOM | wx.EXPAND | wx.TOP, 4)
 
-        self.resolve = wx.Button(self.panel_1, wx.ID_ANY, "bt_resolve")
-        header.Add(self.resolve, 0, 0, 0)
+        self.bt_resolve = wx.Button(self.panel_1, wx.ID_ANY, "Resolve")
+        header.Add(self.bt_resolve, 0, 0, 0)
 
-        self.show = wx.Button(self.panel_1, wx.ID_ANY, "bt_show")
-        header.Add(self.show, 0, 0, 0)
+        self.lb_status = wx.TextCtrl(self.panel_1, wx.ID_ANY, "")
+        self.lb_status.SetBackgroundColour(wx.Colour(233, 233, 233))
+        self.lb_status.SetFont(wx.Font(9, wx.FONTFAMILY_ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, 0, "Palatino Linotype"))
+        header.Add(self.lb_status, 0, 0, 0)
+
+        self.bt_stop = wx.Button(self.panel_1, wx.ID_ANY, "Stop")
+        header.Add(self.bt_stop, 0, 0, 0)
 
         self.board = wx.BoxSizer(wx.VERTICAL)
         sizer_1.Add(self.board, 1, wx.EXPAND, 0)
@@ -664,9 +694,11 @@ class CsFrame(wx.Frame):
 
         self.Layout()
         self.Centre()
+        EVT_RESULT(self, self.on_result)
+        EVT_PARTIAL_RESULT(self, self.on_partial_result)
 
-        self.Bind(wx.EVT_BUTTON, self.on_bt_resolve_pressed, self.resolve)
-        self.Bind(wx.EVT_BUTTON, self.on_test, self.show)
+        self.Bind(wx.EVT_BUTTON, self.on_bt_resolve_pressed, self.bt_resolve)
+        self.Bind(wx.EVT_BUTTON, self.on_bt_stop_pressed, self.bt_stop)
         self.Bind(wx.EVT_TEXT, self.on_txt, self.cell_11)
         self.Bind(wx.EVT_TEXT, self.on_txt, self.cell_12)
         self.Bind(wx.EVT_TEXT, self.on_txt, self.cell_13)
@@ -752,18 +784,17 @@ class CsFrame(wx.Frame):
 
     def on_bt_resolve_pressed(self, event):  # wxGlade: CsFrame.<event_handler>
         print("Event handler 'on_bt_resolve_pressed' called!")
-        """
-        validate that there are clues: min is 17 for classic sudoku
-        """
         # print("abs path of current dir -->" + os.path.abspath("."))
         # for p in sys.path:
         #     print("path --> "+ p)
+        self.lb_status.SetLabel('Processing...')
 
         self.clues_dict = {
            12:4,14:3,17:6,21:1,22:2,25:7,28:4,36:8,39:1,41:9,56:6,57:5,
            61:4,64:9,67:3,72:1,73:2,75:5,81:3,91:7,93:9,95:2,97:8,98:1
         }
 
+        # validate that there are clues: min is 17 for classic sudoku
         if len(self.clues_dict.keys()) < CLASSIC_SUDOKU_MIN_CLUES:
             wx.MessageBox("Too few clues provided. Minimum expected for classic Sudoku is 17",
             "Error: invalid number of clues", wx.OK)
@@ -786,14 +817,16 @@ class CsFrame(wx.Frame):
 
     def on_result(self, event):
         """Show Result status."""
-        if event.data is None:
-            # Thread aborted (using our convention of None return)
-            wx.MessageBox("Computation aborted", wx.OK)
-        else:
-            # Process results here
-            self.load_board(event.data)
-        # In either event, the worker is done
-        self.worker = None
+        # if event.data is None:
+        #     # Thread aborted (using our convention of None return)
+        #     wx.MessageBox("Computation aborted", "Abort", wx.OK)
+        # else:
+        #     # Process results here
+        #     print("Finished")
+        #     # self.load_board(event.data)
+        # # In either event, the worker is done
+        #     self.worker = None
+        # event.Skip()
     
     def load_board(self, board: Dict[int, int]) -> None:
         """
@@ -802,42 +835,52 @@ class CsFrame(wx.Frame):
         for k in board.keys():
             wx_cell = self.FindWindowById(k)
             wx_cell.SetValue(str(board[k]))
-        
-    def on_test(self, event):  # wxGlade: CsFrame.<event_handler>
-        print("Event handler 'on_test' called!")
-        
-        self.load_board(self.resolver.get_board())
+
+    def on_partial_result(self, event):
+        cell, value = event.data
+        if not value:
+            wx.MessageBox(message="Stop called: empty event",caption="Info",style=wx.OK)
+            self.worker = None
+            self.lb_status.SetValue("Stopped")
+        else:
+            wx_cell = self.FindWindowById(cell)
+            wx_cell.SetValue(str(value))
+        event.Skip()
 
     def on_txt(self, event):  # wxGlade: CsFrame.<event_handler>
-        print("Event handler 'on_txt' called!")
-        # print(type(event)) # wx._core.CommandEvent
+        """
+        Called when something is written in one of the board's cells.
+        """
+        print("Event handler 'on_txt' called AND ignored!")
 
-        cell_id = event.GetId()
-        value = event.GetString()
-        print(f"Text entered in cell {str(cell_id)} -> {value}")
+        # cell_id = event.GetId()
+        # value = event.GetString()
+        # print(f"Text entered in cell {str(cell_id)} -> {value}")
 
-        if value == '':
-            if cell_id in self.clues.keys():
-                self.clues.pop(cell_id)
-                print(f"Emptied cell {cell_id}")
-        else:
-            try:
-                value_int = int(value)
-                if value_int > 0 and value_int < 10:
-                    self.clues[cell_id] = value
-                    print(f"Entered value (cell -> val) {cell_id} -> {value}")
-                else:
-                    print(f"Invalid value: out of range: {value}")
-            except ValueError:
-                # could not parse to int
-                print(f"Invalid value: not a number: {value}")
+        # if value == '':
+        #     if cell_id in self.clues.keys():
+        #         self.clues.pop(cell_id)
+        #         print(f"Emptied cell {cell_id}")
+        # else:
+        #     try:
+        #         value_int = int(value)
+        #         if value_int > 0 and value_int < 10:
+        #             self.clues[cell_id] = value
+        #             print(f"Entered value (cell -> val) {cell_id} -> {value}")
+        #         else:
+        #             print(f"Invalid value: out of range: {value}")
+        #     except ValueError:
+        #         # could not parse to int
+        #         print(f"Invalid value: not a number: {value}")
     
         event.Skip()
 
-    def on_txt_enter(self, event):  # wxGlade: CsFrame.<event_handler>
-        print("Event handler 'on_txt_enter' not implemented!")
+    def on_bt_stop_pressed(self, event) -> None:  # wxGlade: CsFrame.<event_handler>
+        print("Event handler 'on_bt_stop_pressed' called")
+        if self.worker:
+            self.lb_status.SetValue("Stopping...")
+            self.worker.abort()
         event.Skip()
-
 # end of class CsFrame
 
 class MyApp(wx.App):

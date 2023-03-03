@@ -33,6 +33,7 @@ class Board():
         self, 
         clues: Dict[int, int]
     ) -> None:
+        self.loop = True
         self.curr = 10  # index of the 'zero cell'
         # self.clues = [12,14,17,21,22,25,28,36,39,41,56,57,61,64,67,72,73,75,81,91,93,95,97,98] 
         # self.clues_values = {
@@ -51,7 +52,13 @@ class Board():
     def get_board(self) -> Dict[int, int]:
         return self.BOARD
 
-    def run(self) -> Dict[int, int]:
+    def fallback(self):
+        pass
+
+    def stop(self):
+        self.loop = False
+
+    def run(self, callback=None) -> Dict[int, int]:
         """
         get cell
         get value of cell
@@ -66,9 +73,10 @@ class Board():
             store value in cells
             get prev cell
         """
+        self.callback = callback or self.fallback(self)
         dir = 1
         Board.print_board(self.BOARD)
-        while True:
+        while self.loop:
             if dir == 1:
                 self.curr = self.next(self.curr)
             elif dir == -1:
@@ -83,16 +91,19 @@ class Board():
                 value += 1
                 if self.check(self.curr, value):
                     self.BOARD[self.curr] = value
+                    callback(self.curr, value)
                     dir = 1
                     if self.curr == 99:
                         Board.print_board(self.BOARD)
                         print("Reached last cell successfully!")
+                        callback(self.curr, None)
                         return self.BOARD
                     break
             
             if value == 9 and dir == 0:
                 #backtracking
                 self.BOARD[self.curr] = 0
+                callback(self.curr, value)
                 dir = -1
                 if self.curr == 11:
                     Board.print_board(self.BOARD)

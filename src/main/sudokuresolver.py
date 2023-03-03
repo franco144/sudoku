@@ -1,5 +1,5 @@
 from board import Board
-from typing import Dict
+from typing import Dict, Tuple
 
 class SudokuResolver():
 
@@ -19,3 +19,9 @@ class SudokuResolver():
     def resolve(self) -> Dict[int, int]:
         print("\n\nStarting execution...\n")
         return self.b.run()
+    
+    def run(self, callback) -> Tuple[int]:
+        self.b.run(callback)
+
+    def stop(self) -> None:
+        self.b.stop()
