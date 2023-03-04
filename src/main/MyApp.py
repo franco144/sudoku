@@ -19,11 +19,13 @@ from sudokuresolver import SudokuResolver
 # begin wxGlade: extracode
 # end wxGlade
 
+
 CLASSIC_SUDOKU_MIN_CLUES = 17
 
 # Define notification event for thread completion
 EVT_RESULT_ID = wx.ID_ANY
 EVT_PARTIAL_RESULT_ID = wx.ID_ANY
+
 
 def EVT_RESULT(win, func):
     """Define Result Event."""
@@ -61,11 +63,7 @@ class ResolverThread(Thread):
         self._notify_window = notify_window
         self._want_abort = False
         self._resolver = resolver
-        self.has_next = 1
-        # This starts the thread running on creation, but you could
-        # also make the GUI thread responsible for calling this
-        self.start()
-        
+        self.has_next = 1        
 
     def run(self):
         """Run Worker Thread."""
@@ -87,8 +85,8 @@ class ResolverThread(Thread):
 
         self.has_next = value
         if self.has_next:
-            time.sleep(0.00001)
             wx.PostEvent(self._notify_window, PartialResultEvent((cell, value)))
+            time.sleep(0.00001)
         else:
             print(f"Reached last cell... exiting")
             return
@@ -811,9 +809,8 @@ class CsFrame(wx.Frame):
         self.load_board(b.get_board())
         
         self.worker = ResolverThread(self, resolver=self.resolver)
-        # solution = resolver.resolve()
-        # self.load_board(solution)
-        # event.Skip()
+        self.worker.start()
+
 
     def on_result(self, event):
         """Show Result status."""
@@ -833,8 +830,12 @@ class CsFrame(wx.Frame):
         Load the given resolved sudoku in the GUI 
         """
         for k in board.keys():
+            if board[k] == 0:
+                continue
             wx_cell = self.FindWindowById(k)
             wx_cell.SetValue(str(board[k]))
+            wx_cell.SetForegroundColour(wx.Colour(255, 0, 0))
+
 
     def on_partial_result(self, event):
         cell, value = event.data
