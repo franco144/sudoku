@@ -37,7 +37,6 @@ class Board():
     ) -> None:
         self.loop = True
         self.start_time = None
-        self.end_time = None
         self.curr = 10  # index of the 'zero cell'
         # self.clues = [12,14,17,21,22,25,28,36,39,41,56,57,61,64,67,72,73,75,81,91,93,95,97,98] 
         # self.clues_values = {
@@ -100,7 +99,6 @@ class Board():
                     dir = 1
                     # check if last cell of the board is reached
                     if self.curr == 99:
-                        self.end_time = time.time()
                         Board.print_board(self.BOARD)
                         print("Reached last cell successfully!")
                         self.callback(self.curr, None)
@@ -117,7 +115,7 @@ class Board():
                     Board.print_board(self.BOARD)
                     raise Exception("Reached 9 on first cell and moving back") 
         
-        print(f"Execution time in seconds {self.end_time-self.start_time}")
+        print(f"Execution time in seconds {time.time()-self.start_time}")
 
 
     def isValid(self, cell, num):
