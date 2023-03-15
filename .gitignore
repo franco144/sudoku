@@ -1,4 +1,3 @@
 **/*.bak
 **/*.pyc
-src/main/__pycache__/*
 src/main/ui/#~wxg.autosave~wxglade.wxg#
