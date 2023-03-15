@@ -3,7 +3,7 @@ import sys
 from board import Board
 from sudokuresolver import SudokuResolver
 
-def run():
+def run(headless=False):
     """
     create a Board
     add clues to the Board
@@ -16,7 +16,10 @@ def run():
     
     resolver = SudokuResolver(b)
     resolver.print_board()
-    # resolver.resolve()
 
-# if __name__ == "__main__":
-#     run()
+    # check if it's running without GUI
+    if headless:
+        resolver.resolve()
+
+if __name__ == "__main__":
+    run(True)
