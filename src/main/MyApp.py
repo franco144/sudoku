@@ -86,7 +86,7 @@ class ResolverThread(Thread):
         self.has_next = value
         if self.has_next:
             wx.PostEvent(self._notify_window, PartialResultEvent((cell, value)))
-            time.sleep(0.00001)
+            time.sleep(0.0000000000000001)
         else:
             print(f"Reached last cell... exiting")
             return
