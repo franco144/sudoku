@@ -1,3 +1,4 @@
+import time
 import sys
 from typing import Dict
 
@@ -16,6 +17,7 @@ from typing import Dict
 | 7  5  9 | 4  2  3 | 8  1  6 |
 -------------------------------
 """
+
 class Board():
     BOARD = {
         11:  0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0,
@@ -34,6 +36,8 @@ class Board():
         clues: Dict[int, int]
     ) -> None:
         self.loop = True
+        self.start_time = None
+        self.end_time = None
         self.curr = 10  # index of the 'zero cell'
         # self.clues = [12,14,17,21,22,25,28,36,39,41,56,57,61,64,67,72,73,75,81,91,93,95,97,98] 
         # self.clues_values = {
@@ -52,9 +56,6 @@ class Board():
     def get_board(self) -> Dict[int, int]:
         return self.BOARD
 
-    def fallback(self):
-        pass
-
     def stop(self):
         self.loop = False
 
@@ -62,7 +63,7 @@ class Board():
         """
         get cell
         get value of cell
-        while value <= 9
+        while value < 9
             increase value of 1
             check value for violations
                 if OK
@@ -73,10 +74,12 @@ class Board():
             store value in cells
             get prev cell
         """
-        self.callback = callback or self.fallback(self)
+        self.callback = callback or fallback
         dir = 1
         Board.print_board(self.BOARD)
+        self.start_time = time.time()
         while self.loop:
+            # move cell
             if dir == 1:
                 self.curr = self.next(self.curr)
             elif dir == -1:
@@ -85,31 +88,39 @@ class Board():
                 Board.print_board(self.BOARD)
                 raise Exception(f"Invalid value for dir {dir}")
 
+            # read value in cell
             value = self.BOARD[self.curr]
             dir = 0
             while value < 9:
                 value += 1
-                if self.check(self.curr, value):
+                # check that value do not violate any constraint
+                if self.isValid(self.curr, value):
                     self.BOARD[self.curr] = value
-                    callback(self.curr, value)
+                    self.callback(self.curr, value)
                     dir = 1
+                    # check if last cell of the board is reached
                     if self.curr == 99:
+                        self.end_time = time.time()
                         Board.print_board(self.BOARD)
                         print("Reached last cell successfully!")
-                        callback(self.curr, None)
-                        return self.BOARD
+                        self.callback(self.curr, None)
+                        self.stop()
+                    
                     break
             
             if value == 9 and dir == 0:
                 #backtracking
                 self.BOARD[self.curr] = 0
-                callback(self.curr, value)
+                self.callback(self.curr, value)
                 dir = -1
                 if self.curr == 11:
                     Board.print_board(self.BOARD)
                     raise Exception("Reached 9 on first cell and moving back") 
+        
+        print(f"Execution time in seconds {self.end_time-self.start_time}")
 
-    def check(self, cell, num):
+
+    def isValid(self, cell, num):
         row = str(cell)[:1]
         col = str(cell)[1:]
         # check if num is in col
@@ -181,3 +192,5 @@ class Board():
         print("-------------------------------")
     
 
+def fallback(curr_cell:int, value:int):
+    pass
