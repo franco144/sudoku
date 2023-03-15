@@ -63,7 +63,7 @@ class ResolverThread(Thread):
         self._notify_window = notify_window
         self._want_abort = False
         self._resolver = resolver
-        self.has_next = 1        
+        self.has_next = 1
 
     def run(self):
         """Run Worker Thread."""
