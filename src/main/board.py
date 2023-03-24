@@ -58,6 +58,12 @@ class Board():
     def stop(self):
         self.loop = False
 
+    def calculate_index_last_cell(self) -> int:
+        for i in range(99, 10, -1):
+            if i not in [90,80,70,60,50,40,30,20] and i not in self.clue_cells:
+                return i
+        return 99
+
     def run(self, callback=None) -> Dict[int, int]:
         """
         get cell
@@ -73,6 +79,7 @@ class Board():
             store value in cells
             get prev cell
         """
+        self.index_last_cell = self.calculate_index_last_cell(self)
         self.callback = callback or fallback
         dir = 1
         Board.print_board(self.BOARD)
@@ -98,7 +105,7 @@ class Board():
                         self.callback(self.curr, value)
                         dir = 1
                         # check if last cell of the board is reached
-                        if self.curr == 99:
+                        if self.curr == self.index_last_cell:
                             Board.print_board(self.BOARD)
                             print("Reached last cell successfully!")
                             self.callback(self.curr, None)
