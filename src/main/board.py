@@ -77,45 +77,45 @@ class Board():
         dir = 1
         Board.print_board(self.BOARD)
         self.start_time = time.time()
-        while self.loop:
-            # move cell
-            if dir == 1:
-                self.curr = self.next(self.curr)
-            elif dir == -1:
-                self.curr = self.prev(self.curr)
-            else:
-                Board.print_board(self.BOARD)
-                raise Exception(f"Invalid value for dir {dir}")
+        try:
+            while self.loop:
+                # move cell
+                if dir == 1:
+                    self.curr = self.next(self.curr)
+                elif dir == -1:
+                    self.curr = self.prev(self.curr)
+                else:
+                    raise Exception(f"Invalid value for dir {dir}")
 
-            # read value in cell
-            value = self.BOARD[self.curr]
-            dir = 0
-            while value < 9:
-                value += 1
-                # check that value do not violate any constraint
-                if self.isValid(self.curr, value):
-                    self.BOARD[self.curr] = value
+                # read value in cell
+                value = self.BOARD[self.curr]
+                dir = 0
+                while value < 9:
+                    value += 1
+                    # check that value do not violate any constraint
+                    if self.isValid(self.curr, value):
+                        self.BOARD[self.curr] = value
+                        self.callback(self.curr, value)
+                        dir = 1
+                        # check if last cell of the board is reached
+                        if self.curr == 99:
+                            Board.print_board(self.BOARD)
+                            print("Reached last cell successfully!")
+                            self.callback(self.curr, None)
+                            self.stop()
+                        
+                        break
+                
+                if value == 9 and dir == 0:
+                    #backtracking
+                    self.BOARD[self.curr] = 0
                     self.callback(self.curr, value)
-                    dir = 1
-                    # check if last cell of the board is reached
-                    if self.curr == 99:
-                        Board.print_board(self.BOARD)
-                        print("Reached last cell successfully!")
-                        self.callback(self.curr, None)
-                        self.stop()
-                    
-                    break
-            
-            if value == 9 and dir == 0:
-                #backtracking
-                self.BOARD[self.curr] = 0
-                self.callback(self.curr, value)
-                dir = -1
-                if self.curr == 11:
-                    Board.print_board(self.BOARD)
-                    raise Exception("Reached 9 on first cell and moving back") 
-        
-        print(f"Execution time in seconds {time.time()-self.start_time}")
+                    dir = -1
+                    if self.curr == 11:
+                        raise Exception("Reached 9 on first cell and moving back") 
+        finally:
+            Board.print_board(self.BOARD)
+            print(f"Execution time in seconds {time.time()-self.start_time}")
 
 
     def isValid(self, cell, num):
