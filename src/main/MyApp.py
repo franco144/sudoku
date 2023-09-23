@@ -788,9 +788,11 @@ class CsFrame(wx.Frame):
         self.lb_status.SetLabel('Processing...')
 
         self.clues_dict = {
-           12:4,14:3,17:6,21:1,22:2,25:7,28:4,36:8,39:1,41:9,56:6,57:5,
-           61:4,64:9,67:3,72:1,73:2,75:5,81:3,91:7,93:9,95:2,97:8,98:1
+           14:9,17:7,22:8,24:7,25:6,27:5,31:6,33:7,35:1,37:9,38:4,
+           43:3,45:5,48:9,53:2,56:8,61:4,66:7,68:1,
+           74:4,77:6,81:7,87:2,93:5,96:3,97:1
         }
+        print(f"This is the clues dict I have...\n{self.clues_dict}")
 
         # validate that there are clues: min is 17 for classic sudoku
         if len(self.clues_dict.keys()) < CLASSIC_SUDOKU_MIN_CLUES:
@@ -852,7 +854,7 @@ class CsFrame(wx.Frame):
         """
         Called when something is written in one of the board's cells.
         """
-        print("Event handler 'on_txt' called AND ignored!")
+        # print("Event handler 'on_txt' called AND ignored!")
 
         # cell_id = event.GetId()
         # value = event.GetString()
