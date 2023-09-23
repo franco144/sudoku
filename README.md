@@ -1,5 +1,5 @@
 # classic sudoku resolver
-![classic_sudoku_resolver](https://github.com/franco144/sudoku/blob/doc/classic_sudoku_resolver.gif?raw=true)
+![classic_sudoku_resolver](https://github.com/franco144/sudoku/blob/main/doc/classic_sudoku_resolver.gif?raw=true)
 
 ## Feed the Sudoku clues
 Clues are in MyApp.py#on_bt_resolve_pressed
