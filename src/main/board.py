@@ -79,7 +79,7 @@ class Board():
             store value in cells
             get prev cell
         """
-        self.index_last_cell = self.calculate_index_last_cell(self)
+        self.index_last_cell = self.calculate_index_last_cell()
         self.callback = callback or fallback
         dir = 1
         Board.print_board(self.BOARD)
